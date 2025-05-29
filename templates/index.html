@@ -49,80 +49,196 @@
     <div class="offcanvas-body">
       <form id="filter-form">
         <div class="mb-3">
-          <label class="form-label">Category</label>
-          <select class="form-select" name="tag">
-            <option value="">All Categories</option>
-            <option value="nature">Nature</option>
-            <option value="food">Food</option>
-            <option value="vanlife">Vanlife</option>
+          <label class="form-label">Tag</label>
+            <div class="mb-3">
+              <label class="form-label">Tags</label>
+              <div id="tag-checkboxes" class="d-flex flex-wrap gap-2">
+              <!-- checkboxes will be inserted here -->
+              </div>
+            </div>
+          <small class="text-muted">Hold Ctrl or Cmd to select multiple</small>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">City</label>
+          <select class="form-select" name="city" id="city-select">
+            <option value="">All Cities</option>
           </select>
         </div>
         <div class="mb-3">
-          <label class="form-label">Amenities</label>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="amenities" value="wifi" id="wifiCheck">
-            <label class="form-check-label" for="wifiCheck">WiFi</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="amenities" value="shower" id="showerCheck">
-            <label class="form-check-label" for="showerCheck">Shower</label>
-          </div>
+          <label class="form-label">State</label>
+          <select class="form-select" name="state" id="state-select">
+            <option value="">All States</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Subregion</label>
+          <select class="form-select" name="subregion" id="subregion-select">
+            <option value="">All Subregions</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Region</label>
+          <select class="form-select" name="region" id="region-select">
+            <option value="">All Regions</option>
+          </select>
         </div>
         <button type="submit" class="btn btn-outline-primary w-100">Apply Filters</button>
       </form>
     </div>
   </div>
 
-  <!-- Map Container -->
-  <div id="map"></div>
+  <!-- Add this div above the map container for the no-results message -->
+<div id="map"></div>
+<div id="no-results-msg" class="alert alert-warning text-center d-none position-absolute top-50 start-50 translate-middle shadow" style="z-index: 9999; width: 80%; max-width: 400px;">
+  <!-- Message inserted by JS -->
+</div>
+<div id="poi-list" class="container-fluid mt-2"></div>
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 
-  <script>
-  const map = L.map('map').setView([39, -98], 4); // Center on US
+<script>
+  const map = L.map('map').setView([39, -98], 4);
+  const markers = L.markerClusterGroup();
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  const markers = L.markerClusterGroup();
-
-  // Fetch POIs from Flask
-  fetch('/pois')
-    .then(res => res.json())
-    .then(pois => {
-      pois.forEach(poi => {
-        const marker = L.marker([poi.lat, poi.lng]);
-
-        const tagBadges = (poi.tags || [])
-          .map(t => `<span class="badge bg-secondary me-1">${t}</span>`)
-          .join('');
-
-        marker.bindPopup(`
-          <strong>${poi.name}</strong><br/>
-          ${poi.city}, ${poi.state}<br/>
-          ${poi.description || ''}<br/>
-          ${tagBadges}
-        `);
-
-        markers.addLayer(marker);
+  function loadFilters() {
+    fetch('/filters')
+      .then(res => res.json())
+      .then(filters => {
+        const tagContainer = document.getElementById("tag-checkboxes");
+        filters.tags.forEach(tag => {
+          const checkbox = document.createElement("div");
+          checkbox.className = "form-check form-check-inline";
+          checkbox.innerHTML = `
+            <input class="form-check-input" type="checkbox" name="tag" value="${tag}" id="tag-${tag}">
+            <label class="form-check-label" for="tag-${tag}">${tag}</label>
+          `;
+          tagContainer.appendChild(checkbox);
+        });
+        populateSelect("city-select", filters.cities);
+        populateSelect("state-select", filters.states);
+        populateSelect("subregion-select", filters.subregions);
+        populateSelect("region-select", filters.regions);
       });
+  }
 
-      map.addLayer(markers);
-    })
-    .catch(err => {
-      console.error("Failed to load POIs:", err);
-      alert("Could not load POIs. Check backend or console.");
+  function populateSelect(id, options) {
+    const select = document.getElementById(id);
+    options.forEach(value => {
+      const opt = document.createElement("option");
+      opt.value = value;
+      opt.textContent = value;
+      select.appendChild(opt);
+    });
+  }
+
+  function buildQueryString() {
+    const form = document.getElementById("filter-form");
+    const params = new URLSearchParams();
+
+    // Tags: multiple
+    const tagChecks = form.querySelectorAll('input[name="tag"]:checked');
+    tagChecks.forEach(input => {
+      params.append("tag", input.value);
     });
 
-  // (Optional) Hook up filtering logic
-  document.getElementById("filter-form").addEventListener("submit", function (e) {
+
+    // Others: single
+    ["city", "state", "subregion", "region"].forEach(field => {
+      const value = form.elements[field].value;
+      if (value) params.append(field, value);
+    });
+
+    return params.toString();
+  }
+
+  function loadPOIs() {
+    const query = buildQueryString();
+    const url = query ? `/pois?${query}` : '/pois';
+
+    fetch(url)
+      .then(async res => {
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error("API error:", errorText);
+          throw new Error("API returned non-OK response");
+        }
+        return res.json();
+      })
+      .then(pois => {
+        markers.clearLayers();
+        map.removeLayer(markers);
+
+        const messageBox = document.getElementById("no-results-msg");
+        const listContainer = document.getElementById("poi-list");
+        listContainer.innerHTML = ""; // Clear previous results
+
+        if (pois.length === 0) {
+          messageBox.classList.remove("d-none");
+          messageBox.innerText = "😔 No POIs matched your filters.";
+          return;
+        } else {
+          messageBox.classList.add("d-none");
+        }
+
+        pois.forEach(poi => {
+          const marker = L.marker([poi.lat, poi.lng]);
+
+          const tags = (poi.tags || [])
+            .map(tag => `<span class="badge bg-secondary me-1">${tag}</span>`)
+            .join("");
+
+          // 🗺️ Map marker
+          marker.bindPopup(`
+            <strong>${poi.name}</strong><br/>
+            ${poi.city}, ${poi.state}<br/>
+            ${poi.description || ""}<br/>
+            ${tags}
+          `);
+          markers.addLayer(marker);
+
+          // 📋 List card
+          const card = document.createElement("div");
+          card.className = "card mb-2 shadow-sm";
+          card.style.cursor = "pointer";
+          card.innerHTML = `
+            <div class="card-body">
+              <h5 class="card-title mb-1">${poi.name}</h5>
+              <small class="text-muted">${poi.city}, ${poi.state}</small>
+              <p class="mb-1">${poi.description || ""}</p>
+              ${tags}
+            </div>
+          `;
+          card.addEventListener("click", () => {
+            map.setView([poi.lat, poi.lng], 12);
+            marker.openPopup();
+          });
+          listContainer.appendChild(card);
+        });
+
+        map.addLayer(markers);
+      })
+      .catch(err => {
+        console.error("Failed to fetch POIs:", err);
+        alert("Could not load POIs. Check browser console.");
+      });
+  }
+
+  document.getElementById("filter-form").addEventListener("submit", e => {
     e.preventDefault();
-    alert("Filter logic goes here — connect this to the backend or client-side filtering.");
+    loadPOIs();
   });
+
+  // Initial setup
+  loadFilters();
+  loadPOIs();
 </script>
+
 </body>
 </html>
