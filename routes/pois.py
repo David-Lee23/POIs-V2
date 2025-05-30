@@ -27,7 +27,6 @@ def non_empty(values):
 
 @pois_bp.route("/pois/<int:poi_id>")
 def get_poi(poi_id):
-    print(f"🔍 GET /pois/{poi_id} - Origin: {request.headers.get('Origin')}")
     try:
         res = supabase.table("pois").select("*").eq("id", poi_id).execute()
         if not res.data:
@@ -39,7 +38,6 @@ def get_poi(poi_id):
 
 @pois_bp.route("/pois", endpoint="pois_index")
 def get_pois():
-    print(f"🔍 GET /pois - Origin: {request.headers.get('Origin')}")
     try:
         query = supabase.table("pois").select("""
             id,
@@ -70,6 +68,7 @@ def get_pois():
         regions = request.args.getlist("region")
         tags = request.args.getlist("tag")
 
+        # Keep basic logging for monitoring
         print("🔍 Filters:", {
             "states": states,
             "cities": cities,
@@ -78,9 +77,7 @@ def get_pois():
             "tags": tags
         })
 
-        print("🔄 Executing Supabase query...")
         res = query.execute()
-        print(f"📊 Supabase returned {len(res.data)} raw POIs")
 
         data = []
         for poi in res.data:
@@ -105,11 +102,9 @@ def get_pois():
 
             data.append(format_poi(poi))
 
-        print(f"✅ Returning {len(data)} filtered POIs")
+        print(f"✅ Returning {len(data)} POIs")
         return jsonify(data)
 
     except Exception as e:
         print("❌ ERROR in /pois:", str(e))
-        import traceback
-        traceback.print_exc()  # Print full stack trace
         return jsonify({"error": str(e)}), 500
