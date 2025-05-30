@@ -164,6 +164,7 @@
 
 <script>
 window.addEventListener('DOMContentLoaded', () => {
+  // Initialize Supabase client with renamed variable
   const sb = window.supabase.createClient(
     'https://qeokcdjnqfladegcnext.supabase.co',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlb2tjZGpucWZzYWRlZ2NuZXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDg5MDYsImV4cCI6MjA2MzU4NDkwNn0.NL_K6y7zyMsJwj7YW6kn07jFn6Lc0Dw0qDxIzlPGUPY'
@@ -180,7 +181,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // Auth event listeners
   document.getElementById("login-btn").addEventListener("click", async () => {
     const { data, error } = await sb.auth.signInWithOAuth({
-      provider: 'google',
+      provider: 'google'
     });
     if (error) console.error("Login failed:", error);
   });
@@ -189,6 +190,7 @@ window.addEventListener('DOMContentLoaded', () => {
     await sb.auth.signOut();
   });
 
+  // Updated auth state change listener
   sb.auth.onAuthStateChange((event, session) => {
     if (session) {
       console.log("✅ Logged in as:", session.user.email);
