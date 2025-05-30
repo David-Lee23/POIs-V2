@@ -163,184 +163,187 @@
 
 
 <script>
-  // Initialize Supabase client
-  const supabase = supabase.createClient(
-    'https://qeokcdjnqfladegcnext.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlb2tjZGpucWZsYWRlZ2NuZXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDg5MDYsImV4cCI6MjA2MzU4NDkwNn0.NL_K6y7zyMsJwj7YW6kn07jFn6Lc0Dw0qDxIzlPGUPY'
-  );
-  // Initialize the map
-  const map = L.map('map').setView([39, -98], 4);
-  const markers = L.markerClusterGroup();
+  window.addEventListener('DOMContentLoaded', () => {
+    // Initialize Supabase client
+    const supabase = supabase.createClient(
+      'https://qeokcdjnqfladegcnext.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlb2tjZGpucWZzYWRlZ2NuZXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDg5MDYsImV4cCI6MjA2MzU4NDkwNn0.NL_K6y7zyMsJwj7YW6kn07jFn6Lc0Dw0qDxIzlPGUPY'
+    );
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
+    // Initialize the map
+    const map = L.map('map').setView([39, -98], 4);
+    const markers = L.markerClusterGroup();
 
-  // Auth event listeners
-  document.getElementById("login-btn").addEventListener("click", async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-    });
-    if (error) console.error("Login failed:", error);
-  });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
 
-  document.getElementById("logout-btn").addEventListener("click", async () => {
-    await supabase.auth.signOut();
-  });
-
-  supabase.auth.onAuthStateChange((event, session) => {
-    if (session) {
-      console.log("✅ Logged in as:", session.user.email);
-      document.getElementById("login-btn").classList.add("d-none");
-      document.getElementById("logout-btn").classList.remove("d-none");
-    } else {
-      console.log("🚪 Logged out");
-      document.getElementById("login-btn").classList.remove("d-none");
-      document.getElementById("logout-btn").classList.add("d-none");
-    }
-  });
-
-  function loadFilters() {
-    fetch('https://poi-tracker-backend.onrender.com/filters')
-      .then(res => res.json())
-      .then(filters => {
-        const tagContainer = document.getElementById("tag-checkboxes");
-        filters.tags.forEach(tag => {
-          const checkbox = document.createElement("div");
-          checkbox.className = "form-check form-check-inline";
-          checkbox.innerHTML = `
-            <input class="form-check-input" type="checkbox" name="tag" value="${tag}" id="tag-${tag}">
-            <label class="form-check-label" for="tag-${tag}">${tag}</label>
-          `;
-          tagContainer.appendChild(checkbox);
-        });
-
-        populateSelect("city-select", filters.cities);
-        populateSelect("state-select", filters.states);
-        populateSelect("subregion-select", filters.subregions);
-        populateSelect("region-select", filters.regions);
-
-        // Refresh Bootstrap Select after population
-        $('.selectpicker').selectpicker('refresh');
+    // Auth event listeners
+    document.getElementById("login-btn").addEventListener("click", async () => {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
       });
-  }
-
-
-  function populateSelect(id, options) {
-    const select = document.getElementById(id);
-    options.forEach(value => {
-      const opt = document.createElement("option");
-      opt.value = value;
-      opt.textContent = value;
-      select.appendChild(opt);
-    });
-  }
-
-  function buildQueryString() {
-    const form = document.getElementById("filter-form");
-    const params = new URLSearchParams();
-
-    // Tags: multiple
-    const tagChecks = form.querySelectorAll('input[name="tag"]:checked');
-    tagChecks.forEach(input => {
-      params.append("tag", input.value);
+      if (error) console.error("Login failed:", error);
     });
 
-
-    ["city", "state", "subregion", "region"].forEach(field => {
-    const selected = Array.from(form.elements[field].selectedOptions)
-                          .map(option => option.value)
-                          .filter(Boolean); // ⬅️ filters out empty strings
-    selected.forEach(val => params.append(field, val));
+    document.getElementById("logout-btn").addEventListener("click", async () => {
+      await supabase.auth.signOut();
     });
 
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        console.log("✅ Logged in as:", session.user.email);
+        document.getElementById("login-btn").classList.add("d-none");
+        document.getElementById("logout-btn").classList.remove("d-none");
+      } else {
+        console.log("🚪 Logged out");
+        document.getElementById("login-btn").classList.remove("d-none");
+        document.getElementById("logout-btn").classList.add("d-none");
+      }
+    });
 
-
-    return params.toString();
-  }
-
-  function loadPOIs() {
-    const query = buildQueryString();
-    const url = query 
-      ? `https://poi-tracker-backend.onrender.com/pois?${query}` 
-      : 'https://poi-tracker-backend.onrender.com/pois';
-
-    fetch(url)
-      .then(async res => {
-        if (!res.ok) {
-          const errorText = await res.text();
-          console.error("API error:", errorText);
-          throw new Error("API returned non-OK response");
-        }
-        return res.json();
-      })
-      .then(pois => {
-        markers.clearLayers();
-        map.removeLayer(markers);
-
-        const messageBox = document.getElementById("no-results-msg");
-        const listContainer = document.getElementById("poi-list");
-        listContainer.innerHTML = ""; // Clear previous results
-
-        if (pois.length === 0) {
-          messageBox.classList.remove("d-none");
-          messageBox.innerText = "😔 No POIs matched your filters.";
-          return;
-        } else {
-          messageBox.classList.add("d-none");
-        }
-
-        pois.forEach(poi => {
-          const marker = L.marker([poi.lat, poi.lng]);
-
-          const tags = (poi.tags || [])
-            .map(tag => `<span class="badge bg-secondary me-1">${tag}</span>`)
-            .join("");
-
-          // 🗺️ Map marker
-          marker.bindPopup(`
-            <strong>${poi.name}</strong><br/>
-            ${poi.city}, ${poi.state}<br/>
-            ${poi.description || ""}<br/>
-            ${tags}
-          `);
-          markers.addLayer(marker);
-
-          // 📋 List card
-          const card = document.createElement("div");
-          card.className = "card mb-2 shadow-sm";
-          card.style.cursor = "pointer";
-          card.innerHTML = `
-            <div class="card-body">
-              <h5 class="card-title mb-1">${poi.name}</h5>
-              <small class="text-muted">${poi.city}, ${poi.state}</small>
-              <p class="mb-1">${poi.description || ""}</p>
-              ${tags}
-            </div>
-          `;
-          card.addEventListener("click", () => {
-            map.setView([poi.lat, poi.lng], 12);
-            marker.openPopup();
+    function loadFilters() {
+      fetch('https://poi-tracker-backend.onrender.com/filters')
+        .then(res => res.json())
+        .then(filters => {
+          const tagContainer = document.getElementById("tag-checkboxes");
+          filters.tags.forEach(tag => {
+            const checkbox = document.createElement("div");
+            checkbox.className = "form-check form-check-inline";
+            checkbox.innerHTML = `
+              <input class="form-check-input" type="checkbox" name="tag" value="${tag}" id="tag-${tag}">
+              <label class="form-check-label" for="tag-${tag}">${tag}</label>
+            `;
+            tagContainer.appendChild(checkbox);
           });
-          listContainer.appendChild(card);
+
+          populateSelect("city-select", filters.cities);
+          populateSelect("state-select", filters.states);
+          populateSelect("subregion-select", filters.subregions);
+          populateSelect("region-select", filters.regions);
+
+          // Refresh Bootstrap Select after population
+          $('.selectpicker').selectpicker('refresh');
         });
+    }
 
-        map.addLayer(markers);
-      })
-      .catch(err => {
-        console.error("Failed to fetch POIs:", err);
-        alert("Could not load POIs. Check browser console.");
+
+    function populateSelect(id, options) {
+      const select = document.getElementById(id);
+      options.forEach(value => {
+        const opt = document.createElement("option");
+        opt.value = value;
+        opt.textContent = value;
+        select.appendChild(opt);
       });
-  }
+    }
 
-  document.getElementById("filter-form").addEventListener("submit", e => {
-    e.preventDefault();
+    function buildQueryString() {
+      const form = document.getElementById("filter-form");
+      const params = new URLSearchParams();
+
+      // Tags: multiple
+      const tagChecks = form.querySelectorAll('input[name="tag"]:checked');
+      tagChecks.forEach(input => {
+        params.append("tag", input.value);
+      });
+
+
+      ["city", "state", "subregion", "region"].forEach(field => {
+      const selected = Array.from(form.elements[field].selectedOptions)
+                            .map(option => option.value)
+                            .filter(Boolean); // ⬅️ filters out empty strings
+      selected.forEach(val => params.append(field, val));
+      });
+
+
+
+      return params.toString();
+    }
+
+    function loadPOIs() {
+      const query = buildQueryString();
+      const url = query 
+        ? `https://poi-tracker-backend.onrender.com/pois?${query}` 
+        : 'https://poi-tracker-backend.onrender.com/pois';
+
+      fetch(url)
+        .then(async res => {
+          if (!res.ok) {
+            const errorText = await res.text();
+            console.error("API error:", errorText);
+            throw new Error("API returned non-OK response");
+          }
+          return res.json();
+        })
+        .then(pois => {
+          markers.clearLayers();
+          map.removeLayer(markers);
+
+          const messageBox = document.getElementById("no-results-msg");
+          const listContainer = document.getElementById("poi-list");
+          listContainer.innerHTML = ""; // Clear previous results
+
+          if (pois.length === 0) {
+            messageBox.classList.remove("d-none");
+            messageBox.innerText = "😔 No POIs matched your filters.";
+            return;
+          } else {
+            messageBox.classList.add("d-none");
+          }
+
+          pois.forEach(poi => {
+            const marker = L.marker([poi.lat, poi.lng]);
+
+            const tags = (poi.tags || [])
+              .map(tag => `<span class="badge bg-secondary me-1">${tag}</span>`)
+              .join("");
+
+            // 🗺️ Map marker
+            marker.bindPopup(`
+              <strong>${poi.name}</strong><br/>
+              ${poi.city}, ${poi.state}<br/>
+              ${poi.description || ""}<br/>
+              ${tags}
+            `);
+            markers.addLayer(marker);
+
+            // 📋 List card
+            const card = document.createElement("div");
+            card.className = "card mb-2 shadow-sm";
+            card.style.cursor = "pointer";
+            card.innerHTML = `
+              <div class="card-body">
+                <h5 class="card-title mb-1">${poi.name}</h5>
+                <small class="text-muted">${poi.city}, ${poi.state}</small>
+                <p class="mb-1">${poi.description || ""}</p>
+                ${tags}
+              </div>
+            `;
+            card.addEventListener("click", () => {
+              map.setView([poi.lat, poi.lng], 12);
+              marker.openPopup();
+            });
+            listContainer.appendChild(card);
+          });
+
+          map.addLayer(markers);
+        })
+        .catch(err => {
+          console.error("Failed to fetch POIs:", err);
+          alert("Could not load POIs. Check browser console.");
+        });
+    }
+
+    document.getElementById("filter-form").addEventListener("submit", e => {
+      e.preventDefault();
+      loadPOIs();
+    });
+
+    // Initial setup
+    loadFilters();
     loadPOIs();
   });
-
-  // Initial setup
-  loadFilters();
-  loadPOIs();
 </script>
 
 </body>
