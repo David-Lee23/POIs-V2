@@ -6,7 +6,7 @@ from routes.tags import tags_bp
 
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["https://www.poitracker.org"])
 
 
 app.register_blueprint(pois_bp)
