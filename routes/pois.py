@@ -7,15 +7,25 @@ pois_bp = Blueprint('pois', __name__)
 
 
 def format_poi(poi):
+    city = poi.get("cities") or {}
+    state = city.get("states") or {}
+    subregion = state.get("sub_regions") or {}
+    region = subregion.get("regions") or {}
+
     return {
         "name": poi.get("place_name"),
         "description": poi.get("description"),
-        "lat": poi.get("lat"),  # Add these columns if you haven’t yet
+        "lat": poi.get("lat"),
         "lng": poi.get("lng"),
-        "city": poi.get("cities", {}).get("name", ""),
-        "state": poi.get("cities", {}).get("states", {}).get("name", ""),
+        "city": city.get("name", ""),
+        "state": state.get("name", ""),
+        "subregion": subregion.get("name", ""),
+        "region": region.get("name", ""),
         "tags": [pt["tags"]["name"] for pt in poi.get("poi_tags", []) if pt.get("tags")]
     }
+
+def non_empty(values):
+    return [v for v in values if v]
 
 
 
@@ -56,34 +66,49 @@ def get_pois():
             )
         """)
 
-        city = request.args.get("city")
-        state = request.args.get("state")
-        subregion = request.args.get("subregion")
-        region = request.args.get("region")
-        tags = request.args.getlist("tag")  # ⬅️ gets multiple values
+        states = request.args.getlist("state")
+        cities = request.args.getlist("city")
+        subregions = request.args.getlist("subregion")
+        regions = request.args.getlist("region")
+        tags = request.args.getlist("tag")
 
-        if city:
-            query = query.eq("cities.name", city)
-        if state:
-            query = query.eq("cities.states.name", state)
-        if subregion:
-            query = query.eq("cities.states.sub_regions.name", subregion)
-        if region:
-            query = query.eq("cities.states.sub_regions.regions.name", region)
+        print("🔍 Filters:", {
+            "states": states,
+            "cities": cities,
+            "subregions": subregions,
+            "regions": regions,
+            "tags": tags
+        })
 
         res = query.execute()
 
-        # Manual filtering by tag list
         data = []
         for poi in res.data:
+            city = poi.get("cities") or {}
+            state = city.get("states") or {}
+            subregion = state.get("sub_regions") or {}
+            region = subregion.get("regions") or {}
+
+            # Manual filtering
+            if states and state.get("name") not in states:
+                continue
+            if cities and city.get("name") not in cities:
+                continue
+            if subregions and subregion.get("name") not in subregions:
+                continue
+            if regions and region.get("name") not in regions:
+                continue
+
             poi_tags = [t["tags"]["name"] for t in poi.get("poi_tags", [])]
-            if tags:
-                if not any(tag in poi_tags for tag in tags):
-                    continue
+            if tags and not any(tag in poi_tags for tag in tags):
+                continue
+
             data.append(format_poi(poi))
 
+        print(f"✅ Returning {len(data)} POIs")
         return jsonify(data)
 
     except Exception as e:
         print("❌ ERROR in /pois:", str(e))
         return jsonify({"error": str(e)}), 500
+
