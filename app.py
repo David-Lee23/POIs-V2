@@ -5,15 +5,12 @@ from routes.tags import tags_bp
 
 app = Flask(__name__)
 
-# Option 1: Use wildcard for Vercel subdomains
+# Temporary fix: Allow all origins (for debugging)
+# WARNING: This is less secure, use only for testing
 CORS(
     app,
-    origins=[
-        "https://www.poitracker.org",
-        "https://*.vercel.app",      # This should work for all Vercel subdomains
-        "http://localhost:3000"
-    ],
-    supports_credentials=True
+    origins="*",  # Allow all origins temporarily
+    supports_credentials=False  # Must be False when using "*"
 )
 
 app.register_blueprint(pois_bp)

@@ -2,9 +2,7 @@ from flask import Blueprint, jsonify
 from services.supabase_client import supabase
 from flask import request
 
-
 pois_bp = Blueprint('pois', __name__)
-
 
 def format_poi(poi):
     city = poi.get("cities") or {}
@@ -27,21 +25,21 @@ def format_poi(poi):
 def non_empty(values):
     return [v for v in values if v]
 
-
-
 @pois_bp.route("/pois/<int:poi_id>")
 def get_poi(poi_id):
+    print(f"🔍 GET /pois/{poi_id} - Origin: {request.headers.get('Origin')}")
     try:
         res = supabase.table("pois").select("*").eq("id", poi_id).execute()
         if not res.data:
             return jsonify({"error": "POI not found"}), 404
         return jsonify(format_poi(res.data[0]))
     except Exception as e:
+        print(f"❌ ERROR in /pois/{poi_id}:", str(e))
         return jsonify({"error": str(e)}), 500
-
 
 @pois_bp.route("/pois", endpoint="pois_index")
 def get_pois():
+    print(f"🔍 GET /pois - Origin: {request.headers.get('Origin')}")
     try:
         query = supabase.table("pois").select("""
             id,
@@ -80,7 +78,9 @@ def get_pois():
             "tags": tags
         })
 
+        print("🔄 Executing Supabase query...")
         res = query.execute()
+        print(f"📊 Supabase returned {len(res.data)} raw POIs")
 
         data = []
         for poi in res.data:
@@ -105,10 +105,11 @@ def get_pois():
 
             data.append(format_poi(poi))
 
-        print(f"✅ Returning {len(data)} POIs")
+        print(f"✅ Returning {len(data)} filtered POIs")
         return jsonify(data)
 
     except Exception as e:
         print("❌ ERROR in /pois:", str(e))
+        import traceback
+        traceback.print_exc()  # Print full stack trace
         return jsonify({"error": str(e)}), 500
-
