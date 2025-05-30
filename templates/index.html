@@ -201,7 +201,7 @@
   });
 
   function loadFilters() {
-    fetch('/filters')
+    fetch('https://poi-tracker-backend.onrender.com/filters')
       .then(res => res.json())
       .then(filters => {
         const tagContainer = document.getElementById("tag-checkboxes");
@@ -261,7 +261,9 @@
 
   function loadPOIs() {
     const query = buildQueryString();
-    const url = query ? `/pois?${query}` : '/pois';
+    const url = query 
+      ? `https://poi-tracker-backend.onrender.com/pois?${query}` 
+      : 'https://poi-tracker-backend.onrender.com/pois';
 
     fetch(url)
       .then(async res => {
