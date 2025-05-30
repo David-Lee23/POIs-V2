@@ -163,44 +163,42 @@
 
 
 <script>
-  window.addEventListener('DOMContentLoaded', () => {
-    // Initialize Supabase client
-    const supabase = supabase.createClient(
-      'https://qeokcdjnqfladegcnext.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlb2tjZGpucWZzYWRlZ2NuZXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDg5MDYsImV4cCI6MjA2MzU4NDkwNn0.NL_K6y7zyMsJwj7YW6kn07jFn6Lc0Dw0qDxIzlPGUPY'
+window.addEventListener('DOMContentLoaded', () => {
+  const supabase = supabase.createClient(
+    'https://qeokcdjnqfladegcnext.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlb2tjZGpucWZsYWRlZ2NuZXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDg5MDYsImV4cCI6MjA2MzU4NDkwNn0.NL_K6y7zyMsJwj7YW6kn07jFn6Lc0Dw0qDxIzlPGUPY'
     );
+  // Initialize the map
+  const map = L.map('map').setView([39, -98], 4);
+  const markers = L.markerClusterGroup();
 
-    // Initialize the map
-    const map = L.map('map').setView([39, -98], 4);
-    const markers = L.markerClusterGroup();
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    // Auth event listeners
-    document.getElementById("login-btn").addEventListener("click", async () => {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-      });
-      if (error) console.error("Login failed:", error);
+  // Auth event listeners
+  document.getElementById("login-btn").addEventListener("click", async () => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
     });
+    if (error) console.error("Login failed:", error);
+  });
 
-    document.getElementById("logout-btn").addEventListener("click", async () => {
-      await supabase.auth.signOut();
-    });
+  document.getElementById("logout-btn").addEventListener("click", async () => {
+    await supabase.auth.signOut();
+  });
 
-    supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        console.log("✅ Logged in as:", session.user.email);
-        document.getElementById("login-btn").classList.add("d-none");
-        document.getElementById("logout-btn").classList.remove("d-none");
-      } else {
-        console.log("🚪 Logged out");
-        document.getElementById("login-btn").classList.remove("d-none");
-        document.getElementById("logout-btn").classList.add("d-none");
-      }
-    });
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (session) {
+      console.log("✅ Logged in as:", session.user.email);
+      document.getElementById("login-btn").classList.add("d-none");
+      document.getElementById("logout-btn").classList.remove("d-none");
+    } else {
+      console.log("🚪 Logged out");
+      document.getElementById("login-btn").classList.remove("d-none");
+      document.getElementById("logout-btn").classList.add("d-none");
+    }
+  });
 
     function loadFilters() {
       fetch('https://poi-tracker-backend.onrender.com/filters')
