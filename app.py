@@ -6,8 +6,16 @@ from routes.tags import tags_bp
 
 
 app = Flask(__name__)
-CORS(app, origins=["https://www.poitracker.org"])
 
+CORS(
+    app,
+    origins=[
+        "https://www.poitracker.org",
+        r"https://*.vercel.app",      # all Vercel preview / prod sub-domains
+        "http://localhost:3000"
+    ],
+    supports_credentials=True       # keeps you safe if you add cookies later
+)
 
 app.register_blueprint(pois_bp)
 app.register_blueprint(tags_bp)
