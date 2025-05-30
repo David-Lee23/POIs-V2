@@ -10,16 +10,24 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 
+from flask import Flask
+from flask_cors import CORS
+
+app = Flask(__name__)
+
 CORS(
     app,
-    origins=[
-        "https://www.poitracker.org",
-        r"https://.*\.vercel\.app"        # any Vercel preview / prod URL
-    ],
-    supports_credentials=True,
-    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization"]
+    resources={
+        r"/.*": {                 # every route
+            "origins": [
+                "https://www.poitracker.org",
+                r"https://.*\.vercel\.app"   # wildcard sub-domains work here
+            ]
+        }
+    },
+    supports_credentials=True
 )
+
 
 
 app.register_blueprint(pois_bp)
