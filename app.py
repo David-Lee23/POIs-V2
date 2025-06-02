@@ -6,15 +6,6 @@ import re
 
 app = Flask(__name__)
 
-from flask_cors import CORS
-
-app = Flask(__name__)
-
-from flask import Flask
-from flask_cors import CORS
-
-app = Flask(__name__)
-
 CORS(
     app,
     resources={
@@ -35,7 +26,7 @@ app.register_blueprint(tags_bp)
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("maitnence.html")
 
 if __name__ == '__main__':
     app.run(debug=True)
