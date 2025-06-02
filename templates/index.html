@@ -26,13 +26,68 @@
         p {
             font-size: 1.2em;
         }
+        .poi-item {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: left;
+        }
+        .poi-item strong {
+            color: #666;
+        }
+        .poi-item p {
+            margin: 8px 0;
+        }
     </style>
+    <script>
+        fetch("https://qeokcdjnqfladegcnext.supabase.co/rest/v1/enriched_pois",
+        {
+            headers: {
+                apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlb2tjZGpucWZsYWRlZ2NuZXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDg5MDYsImV4cCI6MjA2MzU4NDkwNn0.NL_K6y7zyMsJwj7YW6kn07jFn6Lc0Dw0qDxIzlPGUPY",
+                Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlb2tjZGpucWZsYWRlZ2NuZXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDg5MDYsImV4cCI6MjA2MzU4NDkwNn0.NL_K6y7zyMsJwj7YW6kn07jFn6Lc0Dw0qDxIzlPGUPY"
+            }
+        })
+        .then(async response => {
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!Array.isArray(data)) throw new Error("Unexpected response format");
+
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = "";
+
+            data.forEach(poi => {
+                const poiElement = document.createElement('div');
+                poiElement.className = 'poi-item';
+                poiElement.innerHTML = `
+                    <h2>${poi.place_name}</h2>
+                    <p><strong>Location:</strong> ${poi.lat}, ${poi.lng}</p>
+                    <p><strong>City:</strong> ${poi.city || 'N/A'}</p>
+                    <p><strong>State:</strong> ${poi.state || 'N/A'}</p>
+                    <p><strong>Subregion:</strong> ${poi.subregion || 'N/A'}</p>
+                    <p><strong>Region:</strong> ${poi.region || 'N/A'}</p>
+                    <p><strong>Description:</strong> ${poi.description || 'No description available'}</p>
+                    <p><strong>Tags:</strong> ${Array.isArray(poi.tags) ? poi.tags.join(', ') : 'No tags'}</p>
+                `;
+
+                resultsDiv.appendChild(poiElement);
+            });
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            document.getElementById('results').innerHTML = `Failed to load POIs: ${error.message}`;
+        });
+    </script>
 </head>
 <body>
     <div class="container">
-        <h1>We'll Be Back Soon!</h1>
-        <p>Our site is currently under maintenance and is not available right now.<br>
-        Please check back later.</p>
+        <h1>Points of Interest in Boston</h1>
+        <div id="results"></div>
     </div>
 </body>
 </html>
