@@ -2,7 +2,7 @@
  * 1️⃣  CONFIG
  * -----------------------------------------------------------------*/
 const SUPABASE_URL  = "https://qeokcdjnqfladegcnext.supabase.co";
-const SUPABASE_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlb2tjZGpucWZzYWRlZ2NuZXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDg5MDYsImV4cCI6MjA2MzU4NDkwNn0.NL_K6y7zyMsJwj7YW6kn07jFn6Lc0Dw0qDxIzlPGUPY";
+const SUPABASE_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlb2tjZGpucWZsYWRlZ2NuZXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDg5MDYsImV4cCI6MjA2MzU4NDkwNn0.NL_K6y7zyMsJwj7YW6kn07jFn6Lc0Dw0qDxIzlPGUPY.NL_K6y7zyMsJwj7YW6kn07jFn6Lc0Dw0qDxIzlPGUPY";
 
 /** ------------------------------------------------------------------
  * 2️⃣  INIT SUPABASE  (ES module import)
