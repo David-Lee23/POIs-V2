@@ -1,8 +1,8 @@
 /** ------------------------------------------------------------------
  * 1️⃣  CONFIG
  * -----------------------------------------------------------------*/
-const SUPABASE_URL  = "https://qeokcdjnqfladegcnext.supabase.co";
-const SUPABASE_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlb2tjZGpucWZsYWRlZ2NuZXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDg5MDYsImV4cCI6MjA2MzU4NDkwNn0.NL_K6y7zyMsJwj7YW6kn07jFn6Lc0Dw0qDxIzlPGUPY.NL_K6y7zyMsJwj7YW6kn07jFn6Lc0Dw0qDxIzlPGUPY";
+const SUPABASE_URL = "https://qeokcdjnqfladegcnext.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlb2tjZGpucWZzYWRlZ2NuZXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDg5MDYsImV4cCI6MjA2MzU4NDkwNn0.NL_K6y7zyMsJwj7YW6kn07jFn6Lc0Dw0qDxIzlPGUPY";
 
 /** ------------------------------------------------------------------
  * 2️⃣  INIT SUPABASE  (ES module import)
@@ -111,24 +111,19 @@ function buildQueryString() {
  * 7️⃣  LOAD & RENDER POIs
  * -----------------------------------------------------------------*/
 async function loadPOIs() {
-  const qs   = buildQueryString();
-  const url  = `${SUPABASE_URL}/rest/v1/enriched_pois${qs ? "?" + qs : ""}`;
+  const qs = buildQueryString();
+  
+  const { data: pois, error } = await sb
+    .from('enriched_pois')
+    .select('*')
+    .or(qs);
 
-  const res  = await fetch(url, {
-    headers: {
-      apikey:       SUPABASE_KEY,
-      Authorization:`Bearer ${SUPABASE_KEY}`
-    }
-  });
-
-  if (!res.ok) {
-    const txt = await res.text();
-    console.error("Supabase error:", txt);
+  if (error) {
+    console.error("Supabase error:", error);
     alert("Could not load POIs – see console.");
     return;
   }
 
-  const pois = await res.json();
   markers.clearLayers();
   map.removeLayer(markers);
 
