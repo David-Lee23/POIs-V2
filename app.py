@@ -26,7 +26,7 @@ app.register_blueprint(tags_bp)
 
 @app.route("/")
 def index():
-    return render_template("maitnence.html")
+    return render_template("maintenance.html")  # Fix spelling here
 
 if __name__ == '__main__':
     app.run(debug=True)
