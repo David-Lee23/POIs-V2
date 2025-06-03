@@ -118,10 +118,10 @@ function buildQueryString() {
 async function loadPOIs() {
   const qs = buildQueryString();
   
-  const { data: pois, error } = await sb
-    .from('enriched_pois')
-    .select('*')
-    .or(qs);
+  let query = sb.from('enriched_pois').select('*');
+  if (qs) query = query.or(qs);
+
+  const { data: pois, error } = await query;
 
   if (error) {
     console.error("Supabase error:", error);
