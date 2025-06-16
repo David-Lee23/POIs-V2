@@ -1,0 +1,37 @@
+{
+  "name": "poi-tracker",
+  "version": "1.0.0",
+  "description": "A modern web application for tracking and organizing Points of Interest with interactive mapping",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext js",
+    "format": "prettier --write src/**/*.{js,css,html}"
+  },
+  "keywords": [
+    "poi",
+    "mapping",
+    "travel",
+    "leaflet",
+    "supabase",
+    "web-app"
+  ],
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/poi-tracker.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/poi-tracker/issues"
+  },
+  "homepage": "https://github.com/yourusername/poi-tracker#readme"
+} 
